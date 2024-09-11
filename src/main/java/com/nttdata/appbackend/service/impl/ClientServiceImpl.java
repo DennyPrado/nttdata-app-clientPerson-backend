@@ -6,9 +6,12 @@ import com.nttdata.appbackend.model.Client;
 import com.nttdata.appbackend.repository.IClientRepo;
 import com.nttdata.appbackend.repository.IGenericRepo;
 import com.nttdata.appbackend.service.IClientService;
+import com.nttdata.appbackend.util.ResponseType;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,15 +48,24 @@ public class ClientServiceImpl implements IClientService {
     @Override
     public Client modify(ClientDTO clientDTO) throws Exception {
         try{
-            clientDTO.setLastModifiedByUser(userGeneric);
-            clientDTO.setLastModifiedDate(new Date());
+            Client resp = new Client();
+            ClientDTO obj = this.listById(clientDTO.getPersonId());
 
-            Client clt    = mapper.map(clientDTO, Client.class);
-            Client resp   = clientRepo.save(clt);
-            clientDTO.setPersonId(clt.getPersonId());
+            if(obj == null) {
+                throw new ModeloNotFoundException("El ID del cliente no existe");
+            }else{
+                clientDTO.setCreatedByUser(obj.getCreatedByUser());
+                clientDTO.setCreatedDate(obj.getCreatedDate());
+                clientDTO.setLastModifiedByUser(userGeneric);
+                clientDTO.setLastModifiedDate(new Date());
+
+                Client clt    = mapper.map(clientDTO, Client.class);
+                resp          = clientRepo.save(clt);
+                clientDTO.setPersonId(clt.getPersonId());
+            }
             return resp;
         }catch (Exception e){
-            throw new ModeloNotFoundException("Ocurrió un error en el proceso modify: {} " + e.getMessage());
+            throw new ModeloNotFoundException(e.getMessage());
         }
     }
 
@@ -83,9 +95,14 @@ public class ClientServiceImpl implements IClientService {
     @Override
     public void eliminate(Integer idPerson) throws Exception {
         try{
-            clientRepo.deleteById(idPerson);
+            ClientDTO obj = this.listById(idPerson);
+            if(obj == null) {
+                throw new ModeloNotFoundException("El ID a eliminar no existe");
+            }else{
+                clientRepo.deleteById(idPerson);
+            }
         }catch (Exception e){
-            throw new ModeloNotFoundException("Ocurrió un error en el proceso eliminate: {} " + e.getMessage());
+            throw new ModeloNotFoundException(e.getMessage());
         }
     }
 }

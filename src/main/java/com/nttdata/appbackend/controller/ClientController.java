@@ -36,11 +36,9 @@ public class ClientController {
     public ResponseEntity<BaseResponseVo> register(@Valid @RequestBody ClientDTO clientDTO) throws Exception{
         HttpHeaders responseHeaders = new HttpHeaders();
         BaseResponseVo errorResponse = new BaseResponseVo();
-        Client result = null;
         String respGenRegister = "Se realiz\u00f3 el registro exitosamente.";
         try{
-            result = clientService.register(clientDTO);
-
+            clientService.register(clientDTO);
             responseHeaders.set(MENSAJERESPUESTA, ResponseType.SUCCESS.toString());
             responseHeaders.set(MENSAJE, respGenRegister);
 
@@ -60,33 +58,17 @@ public class ClientController {
 
     @PutMapping
     public ResponseEntity<BaseResponseVo> modify(@Valid @RequestBody ClientDTO clientDTO) throws Exception{
-        HttpHeaders responseHeaders = new HttpHeaders();
-        BaseResponseVo errorResponse = new BaseResponseVo();
-        Client result = null;
-        String respGenNotExstID = "El ID del cliente no existe";
+        HttpHeaders responseHeaders   = new HttpHeaders();
+        BaseResponseVo errorResponse  = new BaseResponseVo();
         String respGenModify = "Se realiz\u00f3 la actualizaci\u00f3n exitosamente.";
         try {
-            ClientDTO obj = clientService.listById(clientDTO.getPersonId());
+            clientService.modify(clientDTO);
+            responseHeaders.set(MENSAJERESPUESTA, ResponseType.SUCCESS.toString());
+            responseHeaders.set(MENSAJE, respGenModify);
 
-            if(obj == null) {
-                responseHeaders.set(MENSAJERESPUESTA, ResponseType.INFO.toString());
-                responseHeaders.set(MENSAJE, respGenNotExstID);
-
-                errorResponse.setMessage(respGenNotExstID);
-                errorResponse.setCode(HttpStatus.NOT_FOUND.value());
-                return new ResponseEntity<>(errorResponse, responseHeaders, HttpStatus.NOT_FOUND);
-            }else{
-                clientDTO.setCreatedByUser(obj.getCreatedByUser());
-                clientDTO.setCreatedDate(obj.getCreatedDate());
-                result  = clientService.modify(clientDTO);
-
-                responseHeaders.set(MENSAJERESPUESTA, ResponseType.SUCCESS.toString());
-                responseHeaders.set(MENSAJE, respGenModify);
-
-                errorResponse.setMessage(respGenModify);
-                errorResponse.setCode(HttpStatus.OK.value());
-                return new ResponseEntity<>(errorResponse, responseHeaders, HttpStatus.OK);
-            }
+            errorResponse.setMessage(respGenModify);
+            errorResponse.setCode(HttpStatus.OK.value());
+            return new ResponseEntity<>(errorResponse, responseHeaders, HttpStatus.OK);
         }catch (Exception e){
             responseHeaders.set(MENSAJERESPUESTA, ResponseType.ERROR.toString());
             responseHeaders.set(MENSAJE, "Error al actualizar registro.");
@@ -178,27 +160,15 @@ public class ClientController {
     public ResponseEntity<BaseResponseVo> eliminate(@PathVariable("id") Integer idPerson) throws Exception{
         HttpHeaders responseHeaders = new HttpHeaders();
         BaseResponseVo errorResponse = new BaseResponseVo();
-        String respGenNotExstID = "El ID a eliminar no existe";
         String respGenDelete = "Se realiz\u00f3 la eliminaci\u00f3n exitosamente.";
         try{
-            ClientDTO obj = clientService.listById(idPerson);
+            clientService.eliminate(idPerson);
+            responseHeaders.set(MENSAJERESPUESTA, ResponseType.SUCCESS.toString());
+            responseHeaders.set(MENSAJE, respGenDelete);
 
-            if(obj == null) {
-                responseHeaders.set(MENSAJERESPUESTA, ResponseType.INFO.toString());
-                responseHeaders.set(MENSAJE, respGenNotExstID);
-
-                errorResponse.setMessage(respGenNotExstID);
-                errorResponse.setCode(HttpStatus.NOT_FOUND.value());
-                return new ResponseEntity<>(errorResponse, responseHeaders, HttpStatus.NOT_FOUND);
-            }else{
-                clientService.eliminate(idPerson);
-                responseHeaders.set(MENSAJERESPUESTA, ResponseType.SUCCESS.toString());
-                responseHeaders.set(MENSAJE, respGenDelete);
-
-                errorResponse.setMessage(respGenDelete);
-                errorResponse.setCode(HttpStatus.OK.value());
-                return new ResponseEntity<>(errorResponse, responseHeaders, HttpStatus.OK);
-            }
+            errorResponse.setMessage(respGenDelete);
+            errorResponse.setCode(HttpStatus.OK.value());
+            return new ResponseEntity<>(errorResponse, responseHeaders, HttpStatus.OK);
         }catch (Exception e){
             responseHeaders.set(MENSAJERESPUESTA, ResponseType.ERROR.toString());
             responseHeaders.set(MENSAJE, "Error al eliminar el registro.");

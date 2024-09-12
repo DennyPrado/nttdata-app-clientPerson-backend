@@ -5,23 +5,22 @@ import com.nttdata.appbackend.exception.ModeloNotFoundException;
 import com.nttdata.appbackend.model.Client;
 import com.nttdata.appbackend.repository.IClientRepo;
 import com.nttdata.appbackend.service.impl.ClientServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import org.modelmapper.ModelMapper;
-import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@ExtendWith(MockitoExtension.class)
 class ClientServiceTestsUni {
 
 	@Mock
@@ -33,24 +32,35 @@ class ClientServiceTestsUni {
 	@InjectMocks
 	private ClientServiceImpl clientService;
 
-	@Test
-	void contextLoads() {
+	private ClientDTO clientDTO;
+	private Client client;
+
+	@BeforeEach
+	void setUp() {
+		MockitoAnnotations.openMocks(this);
+		clientDTO = new ClientDTO();
+		clientDTO.setPersonId(1);
+		clientDTO.setCreatedByUser("TestUser");
+		clientDTO.setCreatedDate(new Date());
+
+		client = new Client();
+		client.setPersonId(1);
 	}
 
 	@Test
 	void testListSuccess() throws Exception {
-		Client client = new Client();
-		when(clientRepo.findAll()).thenReturn(List.of(client));
+		List<Client> clients = new ArrayList<>();
+		clients.add(client);
 
-		List<Client> clients = clientService.list();
+		when(clientRepo.findAll()).thenReturn(clients);
 
-		assertNotNull(clients);
-		assertFalse(clients.isEmpty());
-		verify(clientRepo).findAll();
+		List<Client> result = clientService.list();
+		assertNotNull(result);
+		assertEquals(1, result.size());
 	}
 
 	@Test
-	void testListException() throws Exception {
+	void testListThrowsException() {
 		when(clientRepo.findAll()).thenThrow(new RuntimeException("Database error"));
 
 		Exception exception = assertThrows(ModeloNotFoundException.class, () -> {
@@ -62,19 +72,24 @@ class ClientServiceTestsUni {
 
 	@Test
 	void testListByIdSuccess() throws Exception {
-		ClientDTO clientDTO = new ClientDTO();
-		Client client = new Client();
 		when(clientRepo.findById(anyInt())).thenReturn(Optional.of(client));
-		when(mapper.map(client, ClientDTO.class)).thenReturn(clientDTO);
+		when(mapper.map(any(Client.class), any(Class.class))).thenReturn(clientDTO);
 
 		ClientDTO result = clientService.listById(1);
-
 		assertNotNull(result);
-		verify(clientRepo).findById(anyInt());
+		assertEquals(clientDTO.getPersonId(), result.getPersonId());
 	}
 
 	@Test
-	void testListByIdException() throws Exception {
+	void testListByIdNotFound() throws Exception {
+		when(clientRepo.findById(anyInt())).thenReturn(Optional.empty());
+
+		ClientDTO result = clientService.listById(1);
+		assertNull(result);
+	}
+
+	@Test
+	void testListByIdThrowsException() {
 		when(clientRepo.findById(anyInt())).thenThrow(new RuntimeException("Database error"));
 
 		Exception exception = assertThrows(ModeloNotFoundException.class, () -> {
